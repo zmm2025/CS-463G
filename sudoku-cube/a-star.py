@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import heapq
 import math # For rounding up heuristic calculations
 import random # For randomizing cube moves
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Tuple
 
 """
 Sudoku Cube Simulator
@@ -360,6 +360,30 @@ class Node:
             node_cursor = node_cursor.parent
         moves.reverse()
         return moves
+
+class Frontier:
+    """
+    Priority queue ordered by (f, g, counter).
+    - f = g + h (A*)
+    - When f is a tie, g is used as the second key and prefers deeper nodes.
+    - Counter breaks any remaining ties deterministically rather than randomly.
+    """
+    def __init__(self) -> None:
+        self.heap: List[Tuple[int, int, int, Node]] = []
+        self.counter: int = 0
+    
+    def push(self, f: int, g: int, node: Node) -> None:
+        heapq.heappush(self.heap, (f, g, self.counter, node))
+        self.counter += 1
+    
+    def pop(self) -> Node:
+        return heapq.heappop(self.heap)[-1]
+    
+    def __bool__(self) -> bool:
+        return bool(self.heap)
+    
+    def __len__(self) -> int:
+        return len(self.heap)
 
 def main() -> None:
     # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
