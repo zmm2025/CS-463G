@@ -284,7 +284,13 @@ class Cube:
             if set(seen_digits) != set(range(1, 10)):
                 return False
         return True
-
+    
+    def clone(self) -> "Cube":
+        new_cube = Cube()
+        for side in self.faces:
+            tiles = [[self[side][row][col] for col in range(3)] for row in range(3)]
+            new_cube.face(side, tiles)
+        return new_cube
 
 def main() -> None:
     # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
