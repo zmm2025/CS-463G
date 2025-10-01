@@ -286,6 +286,9 @@ class Cube:
         return True
     
     def clone(self) -> "Cube":
+        """
+        Creates a deep copy of a Cube.
+        """
         new_cube = Cube()
         for side in self.faces:
             tiles = [[self[side][row][col] for col in range(3)] for row in range(3)]
