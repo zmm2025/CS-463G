@@ -268,6 +268,23 @@ class Cube:
         
         # Last line
         print("        +-------+                ")
+    
+    def is_solved(self) -> bool:
+        """
+        Each face is considered solved if it contains all numbers 1-9 exactly once.
+        The cube is considered solved if all 6 faces are solved.
+        """
+        side_list = [Face.TOP, Face.BOTTOM, Face.LEFT, Face.RIGHT, Face.FRONT, Face.BACK]
+        for side in side_list:
+            face = self[side]
+            seen_digits = []
+            for row in range(3):
+                for col in range(3):
+                    seen_digits.append(face[row][col])
+            if set(seen_digits) != set(range(1, 10)):
+                return False
+        return True
+
 
 def main() -> None:
     # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
