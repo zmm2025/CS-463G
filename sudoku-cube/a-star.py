@@ -294,6 +294,20 @@ class Cube:
             tiles = [[self[side][row][col] for col in range(3)] for row in range(3)]
             new_cube.face(side, tiles)
         return new_cube
+    
+    def state_key(self) -> tuple:
+        """
+        Returns an immutable "snapshot" of the cube's state.
+        Order matches the cube net layout: TOP, LEFT, FRONT, RIGHT, BACK, BOTTOM.
+        """
+        side_order = [Face.TOP, Face.LEFT, Face.FRONT, Face.RIGHT, Face.BACK, Face.BOTTOM]
+        state_key = []
+        for side in side_order:
+            face = self[side]
+            for row in range(3):
+                for col in range(3):
+                    state_key.append(face[row][col])
+        return tuple(state_key)
 
 def main() -> None:
     # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
