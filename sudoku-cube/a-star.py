@@ -1,5 +1,6 @@
 import math # For rounding up heuristic calculations
 import random # For randomizing cube moves
+from typing import Iterator
 
 """
 Sudoku Cube Simulator
@@ -223,7 +224,7 @@ class Cube:
         
         return move_sequence
 
-    def neighbors(self, skip_inverse_of: tuple[str, str] | None = None):
+    def neighbors(self, skip_inverse_of: tuple[str, str] | None = None) -> Iterator[tuple[tuple[str, str], "Cube"]]:
         """
         Generate an iterable of all legal next states as pairs: ((face, direction), next_cube)
         If skip_inverse_of=(face, dir) is given, omit the move that
