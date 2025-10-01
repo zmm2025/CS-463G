@@ -223,6 +223,26 @@ class Cube:
         
         return move_sequence
 
+    def neighbors(self, skip_inverse_of: tuple[str, str] | None = None):
+        """
+        Generate an iterable of all legal next states as pairs: ((face, direction), next_cube)
+        If skip_inverse_of=(face, dir) is given, omit the move that
+        would undo that last step (same side, opposite direction)
+        """
+        face_choices = [Face.TOP, Face.BOTTOM, Face.LEFT, Face.RIGHT, Face.FRONT, Face.BACK]
+        direction_choices = [Face.CW, Face.CCW]
+
+        for face in face_choices:
+            for direction in direction_choices:
+                if skip_inverse_of is not None:
+                    last_face, last_dir = skip_inverse_of
+                    if face == last_face and direction != last_dir:
+                        continue
+                
+                next_cube = self.clone()
+                next_cube[face].rotate(direction)
+                yield (face, direction), next_cube
+
     def print(self):
         """
         Print the cube as a 2D net with each face as a 3x3 grid.
