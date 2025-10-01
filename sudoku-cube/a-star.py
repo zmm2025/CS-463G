@@ -1,6 +1,8 @@
+from dataclasses import dataclass
+import heapq
 import math # For rounding up heuristic calculations
 import random # For randomizing cube moves
-from typing import Iterator
+from typing import Iterator, List, Optional
 
 """
 Sudoku Cube Simulator
@@ -8,6 +10,8 @@ Sudoku Cube Simulator
 This script simulates a 3x3x3 cube with numbered faces, allows random shuffling,
 and prints the cube in a net layout. The user can specify the number of random moves.
 """
+
+Move = tuple[str, str]
 
 class Face:
     TOP: str    = 'top'
@@ -329,6 +333,33 @@ class Cube:
                 for col in range(3):
                     state_key.append(face[row][col])
         return tuple(state_key)
+
+@dataclass
+class Node:
+    """
+    A single search node used for the A* algorithm.
+    - cube:     The cube configuration at this node
+    - g:        Cost so far (measured in quarter-turns from start)
+    - move:     Move taken from parent node (None for the start)
+    - parent:   Link to the previous node (used for path reconstruction)
+    """
+    cube: Cube
+    g: int
+    move: Optional[Move] = None
+    parent: Optional["Node"] = None
+
+    def path(self) -> List[Move]:
+        """
+        Reconstruct the move sequence from the start to this node.
+        Ex: [(front, "clockwise"), (right, "counterclockwise"), ...]
+        """
+        moves: List[Move] = []
+        node_cursor: Optional[Node] = self
+        while node_cursor is not None and node_cursor.move is not None:
+            moves.append(node_cursor.move)
+            node_cursor = node_cursor.parent
+        moves.reverse()
+        return moves
 
 def main() -> None:
     # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
