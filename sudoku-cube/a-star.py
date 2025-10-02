@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import heapq
 import math # For rounding up heuristic calculations
+import matplotlib.pyplot as plt
 import random # For randomizing cube moves
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
@@ -689,6 +690,86 @@ def run_experiments_interactive() -> None:
 
     print(f"\nWrote {num_writes} rows to {csv_name}")
 
+def analyze_and_plot_interactive() -> None:
+    """
+    Read an experiments CSV and plot average 'nodes_expanded_last_iteration' vs k.
+    Also writes a small summary CSV with per-k averages and counts.
+    """
+    file_name = input("Enter results CSV filename (e.g., astar_results_YYYYMMDD_HHMMSS.csv): ").strip()
+    if file_name == "":
+        print("No filename entered.")
+        return
+
+    # Read CSV rows
+    rows: list[dict] = []
+    try:
+        with open(file_name, "r", newline="") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                rows.append(row)
+    except FileNotFoundError:
+        print(f"File not found: {file_name}")
+        return
+
+    # Group solved trials by k and collect 'nodes_expanded_last_iteration'
+    by_k: dict[int, list[int]] = defaultdict(list)
+    solved_counts: dict[int, int] = defaultdict(int)
+    trials_counts: dict[int, int] = defaultdict(int)
+
+    for row in rows:
+        try:
+            k = int(row["k"])
+        except (KeyError, ValueError):
+            continue
+
+        trials_counts[k] += 1
+        solved = str(row.get("solved", "")).lower() in {"true", "1", "yes"}
+        if solved:
+            solved_counts[k] += 1
+            val = row.get("nodes_expanded_last_iteration", "")
+            if val not in ("", None, "None"):
+                try:
+                    by_k[k].append(int(val))
+                except ValueError:
+                    pass
+
+    if not by_k:
+        print("No solved rows with 'nodes_expanded_last_iteration' found.")
+        return
+
+    # Compute averages
+    ks = sorted(by_k.keys())
+    averages = [ (sum(by_k[k]) / len(by_k[k])) for k in ks ]
+
+    # Pretty print summary
+    print("\nSummary (avg nodes expanded in LAST iteration):")
+    print(" k | trials | solved | avg_last_iter")
+    print("---+--------+--------+--------------")
+    for k, average in zip(ks, averages):
+        print(f"{k:2d} | {trials_counts[k]:6d} | {solved_counts[k]:6d} | {average:12.2f}")
+
+    # Save summary CSV
+    time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    summary_name = f"astar_summary_{time_str}.csv"
+    with open(summary_name, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["k", "trials", "solved", "avg_nodes_expanded_last_iteration"])
+        for k, average in zip(ks, averages):
+            writer.writerow([k, trials_counts[k], solved_counts[k], f"{average:.6f}"])
+    print(f"\nWrote summary CSV: {summary_name}")
+
+    # Plot
+    plt.figure()
+    plt.plot(ks, averages, marker="o")
+    plt.xlabel("k (actual scramble distance)")
+    plt.ylabel("Average nodes expanded in last iteration (f = f*)")
+    plt.title("A* on the Sudoku Cube")
+    plt.grid(True, alpha=0.3)
+
+    plot_name = f"astar_plot_{time_str}.png"
+    plt.savefig(plot_name, dpi=160, bbox_inches="tight")
+    print(f"Saved plot: {plot_name}\n")
+
 def shuffle_check_loop() -> None:
     cube = build_solved_cube()
     print("Initial cube:")
@@ -716,7 +797,8 @@ def main() -> None:
         print("[1] Shuffle & print (for testing)")
         print("[2] Solve one k-randomized instance (CW scramble, CCW solve)")
         print("[3] Run experiment suite & write CSV")
-        print("[4] Quit")
+        print("[4] Analyze & plot a results CSV")
+        print("[5] Quit")
         choice = input("Choose an option: ").strip()
 
         if choice == "1":
@@ -725,7 +807,9 @@ def main() -> None:
             solve_one_interactive()
         elif choice == "3":
             run_experiments_interactive()
-        elif choice == "4" or choice.lower() in {"q", "quit", "exit"}:
+        elif choice == "4":
+            analyze_and_plot_interactive()
+        elif choice == "5" or choice.lower() in {"q", "quit", "exit"}:
             print("Quitting...")
             break
         else:
