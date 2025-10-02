@@ -469,7 +469,7 @@ def astar(
             if tentative_g < g_best.get(next_key, float("inf")):
                 g_best[next_key] = tentative_g
                 f_child = tentative_g + next_cube.heuristic
-                child = Node(cube=next, g=tentative_g, move=move, parent=cur)
+                child = Node(cube=next_cube, g=tentative_g, move=move, parent=cur)
                 frontier.push(f=f_child, g=tentative_g, node=child)
                 pushes += 1
         
