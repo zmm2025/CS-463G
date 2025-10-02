@@ -1,5 +1,7 @@
 from collections import defaultdict
+import csv
 from dataclasses import dataclass
+from datetime import datetime
 import heapq
 import math # For rounding up heuristic calculations
 import random # For randomizing cube moves
@@ -604,6 +606,89 @@ def solve_one_interactive() -> None:
     print(f"Nodes expanded in LAST iteration (f*): {stats['nodes_expanded_last_iteration']}")
     print(f"f* (optimal cost): {stats['f_star']}\n")
 
+def run_experiments_interactive() -> None:
+    """
+    Run randomized experiments and write a CSV with per-trial statistics.
+    For each k in 3-k_max, generate TR trials and solve via A* (CCW moves only).
+    """
+    # Inputs
+    while True:
+        k_max_str = input("Enter k_max (max scramble depth, 3-20 recommended): ").strip()
+        try:
+            k_max = int(k_max_str)
+            if k_max < 3:
+                print("k_max must be >= 3.")
+                continue
+            break
+        except ValueError:
+            print("Please enter an integer for k_max.")
+
+    trials_str = input("Trials per k (default 5): ").strip()
+    try:
+        trials = int(trials_str) if trials_str != "" else 5
+        if trials < 1:
+            print("Number of trials must be >= 1; using 5.")
+            trials = 5
+    except ValueError:
+        print("Invalid number of trials; using 5.")
+        trials = 5
+
+    seed_str = input("Base seed (optional; blank = random): ").strip()
+    base_seed: Optional[int] = None
+    if seed_str != "":
+        try:
+            base_seed = int(seed_str)
+        except ValueError:
+            print("Non-integer seed ignored; using random seed.")
+            base_seed = None
+
+    # --- output file ---
+    time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_name = f"astar_results_{time_str}.csv"
+    fields = [
+        "k", "trial", "seed", "solved", "solution_length", "nodes_expanded_total",
+        "nodes_expanded_last_iteration", "f_star", "visited_size", "frontier_size", "pushes"
+    ]
+
+    num_writes = 0
+    with open(csv_name, "w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fields)
+        writer.writeheader()
+
+        for k in range(3, k_max + 1):
+            for trial_num in range(1, trials + 1):
+                # Get a deterministic seed per (k, trial_num) if a base seed was given
+                seed = (base_seed + k * 1000 + trial_num) if base_seed is not None else None
+
+                # Build solved cube -> scramble (CW) -> solve (CCW)
+                cube = build_solved_cube()
+                apply_random_moves(cube, k, seed=seed, only_cw=True, prevent_undo=True)
+                path, stats = astar(
+                    cube,
+                    allowed_dirs=(Face.CCW,),
+                    prevent_undo=True,
+                    max_expansions=None
+                )
+
+                csv_row = {
+                    "k": k,
+                    "trial": trial_num,
+                    "seed": seed,
+                    "solved": bool(path),
+                    "solution_length": stats["solution_length"],
+                    "nodes_expanded_total": stats["nodes_expanded_total"],
+                    "nodes_expanded_last_iteration": stats["nodes_expanded_last_iteration"],
+                    "f_star": stats["f_star"],
+                    "visited_size": stats["visited_size"],
+                    "frontier_size": stats["frontier_size"],
+                    "pushes": stats["pushes"],
+                }
+                writer.writerow(csv_row)
+                num_writes += 1
+                print(f"k={k} trial={trial_num}: solved={bool(path)} len={stats['solution_length']} last_iter={stats['nodes_expanded_last_iteration']}")
+
+    print(f"\nWrote {num_writes} rows to {csv_name}")
+
 def shuffle_check_loop() -> None:
     cube = build_solved_cube()
     print("Initial cube:")
@@ -630,14 +715,17 @@ def main() -> None:
         print("=== A* on the Sudoku Cube ===")
         print("[1] Shuffle & print (for testing)")
         print("[2] Solve one k-randomized instance (CW scramble, CCW solve)")
-        print("[3] Quit")
+        print("[3] Run experiment suite & write CSV")
+        print("[4] Quit")
         choice = input("Choose an option: ").strip()
 
         if choice == "1":
             shuffle_check_loop()
         elif choice == "2":
             solve_one_interactive()
-        elif choice == "3" or choice.lower() in {"q", "quit", "exit"}:
+        elif choice == "3":
+            run_experiments_interactive()
+        elif choice == "4" or choice.lower() in {"q", "quit", "exit"}:
             print("Quitting...")
             break
         else:
