@@ -431,13 +431,20 @@ def astar(
     start_cube: Cube,
     *,
     prevent_undo: bool = True,
-    max_expansions: Optional[int] = None
+    max_expansions: Optional[int] = None,
+    allowed_dirs: Optional[Tuple[str, ...]] = None,
 ) -> tuple[List[Move], dict]:
     """
     A* search using:
         - g = depth (quarter-turns)
         - h = start_cube.heuristic (admissible)
         - f = g + h
+    
+    Parameters:
+        - prevent_undo: prevent immediately reversing previous move
+        - max_expansions: optional maximum # of expansions as a safety net
+        - allowed_dirs: if given, only expand moves whose direction is in this tuple
+                        e.g. (Face.CCW) to solve using counterclockwise only
     
     Returns (path, stats) where:
         - path: List[Move], i.e. [(face, dir), ...] (empty if no solution found)
@@ -503,6 +510,9 @@ def astar(
 
         move_to_skip = cur.move if prevent_undo else None
         for move, next_cube in cur.cube.neighbors(skip_inverse_of=move_to_skip):
+            if allowed_dirs is not None and move[1] not in allowed_dirs:
+                continue
+            
             next_key = next_cube.state_key()
             tentative_g = cur.g + 1
 
