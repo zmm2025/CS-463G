@@ -1,8 +1,9 @@
+from collections import defaultdict
 from dataclasses import dataclass
 import heapq
 import math # For rounding up heuristic calculations
 import random # For randomizing cube moves
-from typing import Iterator, List, Optional, Tuple
+from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 """
 Sudoku Cube Simulator
@@ -384,6 +385,110 @@ class Frontier:
     
     def __len__(self) -> int:
         return len(self.heap)
+
+def astar(
+    start_cube: Cube,
+    *,
+    prevent_undo: bool = True,
+    max_expansions: Optional[int] = None
+) -> tuple[List[Move], dict]:
+    """
+    A* search using:
+        - g = depth (quarter-turns)
+        - h = start_cube.heuristic (admissible)
+        - f = g + h
+    
+    Returns (path, stats) where:
+        - path: List[Move], i.e. [(face, dir), ...] (empty if no solution found)
+        - stats: {
+            "solution_length": int | None,
+            "nodes_expanded_total": int,
+            "nodes_expanded_last_iteration": int | None,
+            "f_star": int | None,
+            "expansions_by_f": Dict[int, int],
+            "visited_size": int,
+            "frontier_size": int,
+            "pushes": int
+          }
+    """
+    # Frontier ordered by (f, g, counter)
+    frontier = Frontier()
+
+    # Start node
+    start_node = Node(cube=start_cube, g=0)
+    f0 = 0 + start_cube.heuristic
+    frontier.push(f=f0, g=0, node=start_node)    
+
+    # Best g seen per state; visited set
+    g_best: Dict[tuple, int] = { start_cube.state_key(): 0 }
+    visited_states: Set[tuple] = set()
+
+    # Other variables
+    expansions_by_f: Dict[int, int] = defaultdict(int)
+    total_expanded = 0
+    pushes = 1 # we pushed the start
+
+    while frontier:
+        cur = frontier.pop()
+        key = cur.cube.state_key()
+
+        # Skip if we've already permanently visited this exact state
+        if key in visited_states:
+            continue
+
+        # Count this expansion at tis current f (for last-iteration metric)
+        f_cur = cur.g + cur.cube.heuristic
+        expansions_by_f[f_cur] += 1
+        total_expanded += 1
+
+        # Test if goal was reached
+        if cur.cube.is_solved():
+            f_star = cur.g # cost of an optimal solution
+            path = cur.path()
+            stats = {
+                "solution_length": cur.g,
+                "nodes_expanded_total": total_expanded,
+                "nodes_expanded_last_iteration": expansions_by_f.get(f_star, 0),
+                "f_star": f_star,
+                "expansions_by_f": dict(expansions_by_f),
+                "visited_size": len(visited_states),
+                "frontier_size": len(frontier),
+                "pushes": pushes,
+            }
+            return path, stats
+        
+        # Mark as visited and expand neighbors
+        visited_states.add(key)
+
+        move_to_skip = cur.move if prevent_undo else None
+        for move, next_cube in cur.cube.neighbors(skip_inverse_of=move_to_skip):
+            next_key = next_cube.state_key()
+            tentative_g = cur.g + 1
+
+            # If we found a cheaper way to reach this state, push & update it
+            if tentative_g < g_best.get(next_key, float("inf")):
+                g_best[next_key] = tentative_g
+                f_child = tentative_g + next_cube.heuristic
+                child = Node(cube=next, g=tentative_g, move=move, parent=cur)
+                frontier.push(f=f_child, g=tentative_g, node=child)
+                pushes += 1
+        
+        # Optional safety check to stop if search starts to explode
+        if max_expansions is not None and total_expanded >= max_expansions:
+            break
+    
+    # No solution found (or stopped by max_expansions)
+    stats = {
+        "solution_length": None,
+        "nodes_expanded_total": total_expanded,
+        "nodes_expanded_last_iteration": None,
+        "f_star": None,
+        "expansions_by_f": dict(expansions_by_f),
+        "visited_size": len(visited_states),
+        "frontier_size": len(frontier),
+        "pushes": pushes,
+    }
+    return [], stats
 
 def main() -> None:
     # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
