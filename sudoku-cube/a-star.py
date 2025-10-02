@@ -551,6 +551,59 @@ def astar(
     }
     return [], stats
 
+def solve_one_interactive() -> None:
+    # Prompt for k
+    while True:
+        k_str = input("Enter k (number of CW scramble moves, recommended 1-20): ").strip()
+        try:
+            k = int(k_str)
+            if k < 1:
+                print("k must be >= 1.")
+                continue
+            break
+        except ValueError:
+            print("k must be an integer.")
+
+    # Prompt for seed (optional)
+    seed_str = input("Enter seed (optional, must be integer; leave blank for random seed): ").strip()
+    seed: Optional[int] = None
+    if seed_str != "":
+        try:
+            seed = int(seed_str)
+        except ValueError:
+            print("Non-integer seed ignored; using random seed.")
+            seed = None
+
+    # Build solved cube and scramble with only clockwise moves
+    cube = build_solved_cube()
+    scramble = apply_random_moves(
+        cube,
+        k,
+        seed=seed,
+        only_cw=True,
+        prevent_undo=True
+    )
+    print(f"\nScramble (k={k}, seed={seed}): {scramble}")
+
+    # Solve with CCW-only expansions (inverse exists of length k)
+    path, stats = astar(
+        cube,
+        allowed_dirs=(Face.CCW,),
+        prevent_undo=True,
+        max_expansions=None,
+    )
+
+    solved = bool(path)
+    print(f"Solved: {solved}")
+    if solved:
+        print(f"Solution length: {len(path)}  (expected ≈ k={k})")
+    else:
+        print("No solution found (hit limits or bug)")
+
+    print(f"Nodes expanded (total): {stats['nodes_expanded_total']}")
+    print(f"Nodes expanded in LAST iteration (f*): {stats['nodes_expanded_last_iteration']}")
+    print(f"f* (optimal cost): {stats['f_star']}\n")
+
 def main() -> None:
     # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
     
