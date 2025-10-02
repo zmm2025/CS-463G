@@ -386,6 +386,9 @@ class Frontier:
     def __len__(self) -> int:
         return len(self.heap)
 
+def opposite_dir(direction: str) -> str:
+    return Face.CCW if direction == Face.CW else Face.CW
+
 def astar(
     start_cube: Cube,
     *,
