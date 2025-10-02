@@ -389,6 +389,44 @@ class Frontier:
 def opposite_dir(direction: str) -> str:
     return Face.CCW if direction == Face.CW else Face.CW
 
+def apply_random_moves(
+    cube: Cube,
+    k: int,
+    *,
+    seed: int | None = None,
+    only_cw: bool = True,
+    prevent_undo: bool = True,
+) -> list[Move]:
+    """
+    Apply k random quarter-turns to cube in-place and return the list of moves.
+    Defaults:
+        - only_cw=True: scramble with only clockwise turns
+        - prevent_undo=True: avoid reversing the turn of the move just performed
+    """
+    rng = random.Random(seed)
+    faces = [Face.TOP, Face.BOTTOM, Face.LEFT, Face.RIGHT, Face.FRONT, Face.BACK]
+    directions = [Face.CW] if only_cw else [Face.CW, Face.CCW]
+
+    moves: list[Move] = []
+    last_move: Move | None = None
+
+    for _ in range(k):
+        while True:
+            face = rng.choice(faces)
+            direction = rng.choice(directions)
+            if prevent_undo and last_move is not None:
+                last_face, last_dir = last_move
+                if face == last_face and direction == opposite_dir(last_dir):
+                    continue
+            break
+
+        cube[face].rotate(direction)
+        move_taken: Move = (face, direction)
+        moves.append(move_taken)
+        last_move = move_taken
+    
+    return moves
+
 def astar(
     start_cube: Cube,
     *,
