@@ -454,7 +454,7 @@ def astar(
         - prevent_undo: prevent immediately reversing previous move
         - max_expansions: optional maximum # of expansions as a safety net
         - allowed_dirs: if given, only expand moves whose direction is in this tuple
-                        e.g. (Face.CCW) to solve using counterclockwise only
+                        e.g. (Face.CCW,) to solve using counterclockwise only
     
     Returns (path, stats) where:
         - path: List[Move], i.e. [(face, dir), ...] (empty if no solution found)
@@ -585,7 +585,7 @@ def solve_one_interactive() -> None:
     )
     print(f"\nScramble (k={k}, seed={seed}): {scramble}")
 
-    # Solve with CCW-only expansions (inverse exists of length k)
+    # Solve with CCW-only expansions
     path, stats = astar(
         cube,
         allowed_dirs=(Face.CCW,),
@@ -596,9 +596,9 @@ def solve_one_interactive() -> None:
     solved = bool(path)
     print(f"Solved: {solved}")
     if solved:
-        print(f"Solution length: {len(path)}  (expected ≈ k={k})")
+        print(f"Solution length: {len(path)}  (expected: ~ k={k})")
     else:
-        print("No solution found (hit limits or bug)")
+        print("No solution found (exceeded limit or encountered a bug)")
 
     print(f"Nodes expanded (total): {stats['nodes_expanded_total']}")
     print(f"Nodes expanded in LAST iteration (f*): {stats['nodes_expanded_last_iteration']}")
