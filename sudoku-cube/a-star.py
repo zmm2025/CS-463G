@@ -389,6 +389,16 @@ class Frontier:
 def opposite_dir(direction: str) -> str:
     return Face.CCW if direction == Face.CW else Face.CW
 
+def build_solved_cube() -> Cube:
+    cube = Cube()
+    cube.face(Face.TOP,    [[8,1,3],[4,6,7],[2,9,5]])
+    cube.face(Face.BOTTOM, [[1,2,8],[5,3,9],[7,4,6]])
+    cube.face(Face.LEFT,   [[7,1,8],[2,4,6],[9,3,5]])
+    cube.face(Face.RIGHT,  [[4,6,3],[7,5,9],[1,2,8]])
+    cube.face(Face.FRONT,  [[9,5,2],[3,8,1],[6,7,4]])
+    cube.face(Face.BACK,   [[9,5,2],[3,8,1],[6,7,4]])
+    return cube
+
 def apply_random_moves(
     cube: Cube,
     k: int,
