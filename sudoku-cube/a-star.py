@@ -604,36 +604,44 @@ def solve_one_interactive() -> None:
     print(f"Nodes expanded in LAST iteration (f*): {stats['nodes_expanded_last_iteration']}")
     print(f"f* (optimal cost): {stats['f_star']}\n")
 
-def main() -> None:
-    # Main interactive loop: repeatedly ask for number of random moves and shuffle the cube
-    
-    # Initialize and print initial cube
-    cube = Cube()
-    tiles = {
-        cube.face(Face.TOP,    [[8,1,3], [4,6,7], [2,9,5]]),
-        cube.face(Face.BOTTOM, [[1,2,8], [5,3,9], [7,4,6]]),
-        cube.face(Face.LEFT,   [[7,1,8], [2,4,6], [9,3,5]]),
-        cube.face(Face.RIGHT,  [[4,6,3], [7,5,9], [1,2,8]]),
-        cube.face(Face.FRONT,  [[9,5,2], [3,8,1], [6,7,4]]),
-        cube.face(Face.BACK,   [[9,5,2], [3,8,1], [6,7,4]]),
-    }
+def shuffle_check_loop() -> None:
+    cube = build_solved_cube()
     print("Initial cube:")
     cube.print()
-
     while True:
-        try:
-            num_moves = int(input("Enter number of random moves to perform: "))
-        except ValueError:
-            print("Invalid input. Exiting.")
+        input_str = input("Enter number of random moves to perform (blank to exit): ").strip()
+        if input_str == "":
             break
-        
+        try:
+            num_moves = int(input_str)
+        except ValueError:
+            print("Invalid input; type an integer or blank to exit.")
+            continue
+
         moves = cube.shuffle(num_moves)
         print(f"\nAfter {num_moves} random moves:")
         cube.print()
         print("\nMoves performed:")
         print(moves)
-        print(f"Heuristic value: {cube.heuristic}")
+        print(f"Heuristic value: {cube.heuristic}\n")
 
+def main() -> None:
+    while True:
+        print("=== A* on the Sudoku Cube ===")
+        print("[1] Shuffle & print (for testing)")
+        print("[2] Solve one k-randomized instance (CW scramble, CCW solve)")
+        print("[3] Quit")
+        choice = input("Choose an option: ").strip()
+
+        if choice == "1":
+            shuffle_check_loop()
+        elif choice == "2":
+            solve_one_interactive()
+        elif choice == "3" or choice.lower() in {"q", "quit", "exit"}:
+            print("Quitting...")
+            break
+        else:
+            print("Invalid choice.\n")
 
 if __name__ == "__main__":
     main()
