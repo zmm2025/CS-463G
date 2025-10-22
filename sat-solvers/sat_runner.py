@@ -1,4 +1,5 @@
 import os
+import random
 import time
 import csv
 import argparse
@@ -60,8 +61,25 @@ def parse_dimacs(path: str) -> Tuple[int, int, List[List[int]]]:
     return num_vars, num_clauses, clauses
 
 
-# -------------------------- Evaluation helpers --------------------------
+# -------------------------- Helper functions --------------------------
 
+def random_assignment(n_vars: int, rng: random.Random) -> list[bool]:
+    # 1-indexed assignment for convenicne; index 0 unused
+    return [False] + [rng.choice((False, True)) for _ in range(n_vars)]
+
+def clause_satisfied(clause, assign) -> bool:
+    for lit in clause:
+        v = abs(lit)
+        val = assign[v]
+        if (lit > 0 and val) or (lit < 0 and not val):
+            return True
+    return False
+
+def satisfied_count(clauses, assign) -> int:
+    return sum(1 for cl in clauses if clause_satisfied(cl, assign))
+
+def flip(assign, v):
+    assign[v] = not assign[v]
 
 def evaluate_partial(clauses: List[List[int]], assignment: Dict[int, bool]) -> Tuple[int, int]:
     """Evaluate clauses under a partial assignment.
