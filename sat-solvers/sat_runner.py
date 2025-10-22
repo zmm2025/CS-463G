@@ -314,6 +314,26 @@ def run_walksat(clauses, n_vars, *, max_flips=10000, p=0.5, rng=None):
 
     return best_c, best_assign
 
+def run_walksat_trials(path, *, trials=10, seed=1, max_flips=10000, p=0.5):
+    num_vars, num_clauses, clauses = parse_dimacs(path)
+    rows = []
+    for i in range(trials):
+        rng = random.Random(seed + i)
+        t0 = time.perf_counter()
+        best_c, _ = run_walksat(clauses, num_vars, max_flips=max_flips, p=p, rng=rng)
+        dt = time.perf_counter() - t0
+        rows.append({
+            'file': os.path.basename(path),
+            'path': path,
+            'algo': 'walksat',
+            'seed': seed + i,
+            'num_vars': num_vars,
+            'num_clauses': num_clauses,
+            'best_c': best_c,
+            'cpu_time': f'{dt:.6f}',
+        })
+    return rows
+
 
 # -------------------------- Runner / CLI --------------------------
 
