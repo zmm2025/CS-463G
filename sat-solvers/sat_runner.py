@@ -192,6 +192,76 @@ def maxsat_dpll(clauses: List[List[int]], num_vars: int, timeout: float) -> Tupl
     return best_c, best_assign, cpu_time
 
 
+# -------------------------- GSAT --------------------------
+
+
+def run_gsat(clauses, n_vars, *, max_flips=10000, noise=0.10, rng=None):
+    """
+    Very small GSAT: epsilon-greedy random flip, otherwise greedy best flip.
+    Returns (best_c, best_assign).
+    """
+    rng = rng or random.Random()
+    assign = random_assignment(n_vars, rng)
+    best_c = satisfied_count(clauses, assign)
+    best_assign = assign[:]
+
+    for _ in range(max_flips):
+        # exit early if fully satisfied
+        if best_c == len(clauses):
+            return best_c, best_assign[:]
+        
+        # epsilon step: flip a random variable
+        if rng.random() < noise:
+            v = rng.randint(1, n_vars)
+            flip(assign, v)
+            sc = satisfied_count(clauses, assign)
+            if sc >= best_c:
+                best_c, best_assign = sc, assign[:]
+            else:
+                flip(assign, v) # revert if it got worse
+            continue
+
+        # greedy step: choose var with maximal score gain
+        current = satisfied_count(clauses, assign)
+        gains = []
+        for v in range(1, n_vars + 1):
+            flip(assign, v)
+            sc = satisfied_count(clauses, assign)
+            gains.append((sc - current, v))
+            flip(assign, v)
+        max_gain = max(gains, key=lambda t: t[0])[0]
+        candidates = [v for g, v in gains if g == max_gain]
+        v = rng.choice(candidates)
+        flip(assign, v)
+
+        # track best so far
+        sc = satisfied_count(clauses, assign)
+        if sc > best_c:
+            best_c, best_assign = sc, assign[:]
+    
+    return best_c, best_assign
+
+def run_gsat_trials(path, *, trials=10, seed=1, max_flips=10000, noise=0.10):
+    num_vars, num_clauses, clauses = parse_dimacs(path)
+    rows = []
+    for i in range(trials):
+        rng = random.Random(seed + i)
+        t0 = time.perf_counter()
+        best_c, _ = run_gsat(clauses, num_vars, max_flips=max_flips, noise=noise, rng=rng)
+        dt = time.perf_counter() - t0
+        rows.append({
+            'file': os.path.basename(path),
+            'path': path,
+            'algo': 'gsat',
+            'seed': seed + i,
+            'num_vars': num_vars,
+            'num_clauses': num_clauses,
+            'best_c': best_c,
+            'cpu_time': f'{dt:.6f}',
+        })
+    return rows
+
+
 # -------------------------- Runner / CLI --------------------------
 
 
