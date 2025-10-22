@@ -368,11 +368,12 @@ def discover_cnf_files(input_path: str) -> List[str]:
 
 def main():
     parser = argparse.ArgumentParser(description='DPLL Max-SAT runner')
-    parser.add_argument('--algo', choices=['dpll', 'gsat'], default='dpll', help='Algorithm to run')
+    parser.add_argument('--algo', choices=['dpll', 'gsat', 'walksat'], default='dpll', help='Algorithm to run')
     parser.add_argument('--trials', type=int, default=10, help='GSAT: number of trials per file')
     parser.add_argument('--seed', type=int, default=1, help='GSAT: base RNG seed')
     parser.add_argument('--max-flips', type=int, default=10000, help='GSAT: flips per trial')
     parser.add_argument('--noise', type=float, default=0.10, help='GSAT: epsilon noise [0,1]')
+    parser.add_argument('--p', type=float, default=0.5, help='WalkSAT: random-walk probability [0,1]')
     parser.add_argument('input', nargs='?', default=None,
                         help='file or folder to process (.cnf). If omitted, defaults to PA3_Benchmarks or cwd.')
     parser.add_argument('--timeout', type=float, default=1.0, help='CPU time limit per formula (seconds)')
