@@ -414,7 +414,30 @@ def main():
                     writer.writerow(row)
         return
     
-    # write CSV results (DPLL)
+    # WalkSAT
+    if args.algo == 'walksat':
+        with open(args.out, 'w', newline='') as csvfile:
+            fieldnames = ['file', 'path', 'algo', 'seed', 'num_vars', 'num_clauses', 'best_c', 'cpu_time']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for p in paths:
+                if os.path.basename(p).startswith("._") or "__MACOSX" in p:
+                    continue
+                num_vars, num_clauses, clauses = parse_dimacs(p)
+                if num_vars == 0 or num_clauses == 0 or not clauses:
+                    continue
+                print(f'[walksat] {p} ...')
+                for row in run_walksat_trials(
+                    p,
+                    trials=args.trials,
+                    seed=args.seed,
+                    max_flips=args.max_flips,
+                    p=args.p
+                ):
+                    writer.writerow(row)
+        return
+
+    # DPLL
     with open(args.out, 'w', newline='') as csvfile:
         fieldnames = ['file', 'path', 'num_vars', 'num_clauses', 'best_c', 'cpu_time', 'best_assignment_size']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -427,7 +450,7 @@ def main():
             if num_vars == 0 or num_clauses == 0 or not clauses:
                 continue
 
-            print(f'Processing {p} ...')
+            print(f'[dpll] {p} ...')
             res = run_on_file(p, timeout=args.timeout)
             writer.writerow(res)
             print('  ->', res)
