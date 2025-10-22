@@ -230,6 +230,13 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for p in paths:
+            # Skip MacOS junk files and empty parses
+            if os.path.basename(p).startswith("._") or "__MACOSX" in p:
+                continue
+            num_vars, num_clauses, clauses = parse_dimacs(p)
+            if num_vars == 0 or num_clauses == 0 or not clauses:
+                continue
+
             print(f'Processing {p} ...')
             res = run_on_file(p, timeout=args.timeout)
             writer.writerow(res)
