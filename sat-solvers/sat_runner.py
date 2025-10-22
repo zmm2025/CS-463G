@@ -317,7 +317,30 @@ def main():
 
     paths = discover_cnf_files(input_arg)
 
-    # write CSV results
+    # GSAT
+    if args.algo == 'gsat':
+        with open(args.out, 'w', newline='') as csvfile:
+            fieldnames = ['file', 'path', 'algo', 'seed', 'num_vars', 'num_clauses', 'best_c', 'cpu_time']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for p in paths:
+                if os.path.basename(p).startswith("._") or "__MACOSX" in p:
+                    continue
+                num_vars, num_clauses, clauses = parse_dimacs(p)
+                if num_vars == 0 or num_clauses == 0 or not clauses:
+                    continue
+                print(f'[gsat] {p} ...')
+                for row in run_gsat_trials(
+                    p,
+                    trials=args.trials,
+                    seed=args.seed,
+                    max_flips=args.max_flips,
+                    noise=args.noise
+                ):
+                    writer.writerow(row)
+        return
+    
+    # write CSV results (DPLL)
     with open(args.out, 'w', newline='') as csvfile:
         fieldnames = ['file', 'path', 'num_vars', 'num_clauses', 'best_c', 'cpu_time', 'best_assignment_size']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
