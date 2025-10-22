@@ -262,6 +262,59 @@ def run_gsat_trials(path, *, trials=10, seed=1, max_flips=10000, noise=0.10):
     return rows
 
 
+# -------------------------- WalkSAT --------------------------
+
+
+def run_walksat(clauses, n_vars, *, max_flips=10000, p=0.5, rng=None):
+    """
+    Minimal WalkSAT: pick a random unsatisfied clause; with probability p, flip a random var in it,
+    otherwise flip the var in it that maximizes satisfied clauses.
+    Returns (best_c, best_assign).
+    """
+    rng = rng or random.Random()
+    assign = random_assignment(n_vars, rng)
+    best_c = satisfied_count(clauses, assign)
+    best_assign = assign[:]
+
+    def unsat_clauses():
+        return [cl for cl in clauses if not clause_satisfied(cl, assign)]
+
+    for _ in range(max_flips):
+        if best_c == len(clauses):
+            return best_c, best_assign[:]
+
+        unsat = unsat_clauses()
+        if not unsat:
+            return best_c, best_assign[:]
+
+        clause = rng.choice(unsat)
+
+        # random walk with probability p
+        if rng.random() < p:
+            v = abs(rng.choice(clause))
+            flip(assign, v)
+        else:
+            # greedy among vars in the chosen clause
+            vars_in_clause = {abs(lit) for lit in clause}
+            current_satisfied = satisfied_count(clauses, assign)
+            gains = []
+            for v in vars_in_clause:
+                flip(assign, v)
+                sc = satisfied_count(clauses, assign)
+                gains.append((sc - current_satisfied, v))
+                flip(assign, v)
+            max_gain = max(gains, key=lambda t: t[0])[0]
+            candidates = [v for gain, v in gains if gain == max_gain]
+            v = rng.choice(candidates)
+            flip(assign, v)
+
+        sc = satisfied_count(clauses, assign)
+        if sc > best_c:
+            best_c, best_assign = sc, assign[:]
+
+    return best_c, best_assign
+
+
 # -------------------------- Runner / CLI --------------------------
 
 
