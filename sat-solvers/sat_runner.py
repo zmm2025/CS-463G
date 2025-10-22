@@ -138,11 +138,16 @@ def maxsat_dpll(clauses: List[List[int]], num_vars: int, timeout: float) -> Tupl
 
     This implementation is intentionally straightforward: it explores assignments recursively
     and uses a conservative upper bound (sat + undet) to prune branches.
+
+    Returns:
+        (best_c, best_assignment, cput_time, completed, found_optimal)
     """
-    start = time.process_time()
+    start = time.perf_counter()
     best_c = -1
     best_assign: Dict[int, bool] = {}
     total_clauses = len(clauses)
+    completed = False
+    found_optimal = False
 
     # variable ordering: 1..num_vars
     vars_order = list(range(1, num_vars + 1))
@@ -151,7 +156,7 @@ def maxsat_dpll(clauses: List[List[int]], num_vars: int, timeout: float) -> Tupl
         nonlocal best_c, best_assign
 
         # check timeout
-        if time.process_time() - start > timeout:
+        if time.perf_counter() - start > timeout:
             raise TimeoutError()
 
         sat, undet = evaluate_partial(clauses, assignment)
@@ -181,15 +186,19 @@ def maxsat_dpll(clauses: List[List[int]], num_vars: int, timeout: float) -> Tupl
 
     try:
         search(1, {})
+        completed = True
     except TimeoutError:
         # normal: timeout reached
+        completed = False
         pass
     except OptimalFound:
         # found a solution satisfying all clauses
+        found_optimal = True
+        completed = True
         pass
 
-    cpu_time = time.process_time() - start
-    return best_c, best_assign, cpu_time
+    cpu_time = time.perf_counter() - start
+    return best_c, best_assign, cpu_time, completed, found_optimal
 
 
 # -------------------------- GSAT --------------------------
@@ -341,7 +350,15 @@ def run_walksat_trials(path, *, trials=10, seed=1, max_flips=10000, p=0.5):
 def run_on_file(path: str, timeout: float = 30.0) -> Dict:
     """Run maxsat_dpll on a single file and return a result dict for CSV writing."""
     num_vars, num_clauses, clauses = parse_dimacs(path)
-    best_c, best_assign, cpu_time = maxsat_dpll(clauses, num_vars, timeout)
+    best_c, best_assign, cpu_time, completed, found_optimal = maxsat_dpll(clauses, num_vars, timeout)
+
+    if found_optimal and best_c == num_clauses:
+        status = 'SAT'
+    elif completed and best_c < num_clauses:
+        status = 'UNSAT'
+    else:
+        status = 'UNKNOWN'
+
     return {
         'file': os.path.basename(path),
         'path': path,
@@ -350,6 +367,7 @@ def run_on_file(path: str, timeout: float = 30.0) -> Dict:
         'best_c': best_c,
         'cpu_time': cpu_time,
         'best_assignment_size': len(best_assign) if best_assign else 0,
+        'status': status,
     }
 
 
@@ -439,7 +457,7 @@ def main():
 
     # DPLL
     with open(args.out, 'w', newline='') as csvfile:
-        fieldnames = ['file', 'path', 'num_vars', 'num_clauses', 'best_c', 'cpu_time', 'best_assignment_size']
+        fieldnames = ['file', 'path', 'num_vars', 'num_clauses', 'best_c', 'cpu_time', 'best_assignment_size', 'status']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for p in paths:
