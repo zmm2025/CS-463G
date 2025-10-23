@@ -1,0 +1,32 @@
+file,path,num_vars,num_clauses,best_c,cpu_time,best_assignment_size,status
+uf20-0156.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0156.cnf,20,91,91,0.0412406,20,UNKNOWN
+uf20-0157.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0157.cnf,20,91,91,0.2930239,20,UNKNOWN
+uf20-0158.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0158.cnf,20,91,91,0.0249846,20,UNKNOWN
+uf20-0159.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0159.cnf,20,91,91,0.11234720004722476,20,UNKNOWN
+uf20-0160.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0160.cnf,20,91,91,0.019109499640762806,20,UNKNOWN
+uf20-0161.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0161.cnf,20,91,91,0.022727400064468384,20,UNKNOWN
+uf20-0162.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0162.cnf,20,91,91,0.050046300049871206,20,UNKNOWN
+uf20-0163.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0163.cnf,20,91,91,0.0743117,20,UNKNOWN
+uf20-0164.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0164.cnf,20,91,91,0.0787596,20,UNKNOWN
+uf20-0165.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf20-0165.cnf,20,91,91,0.053035699762403965,20,UNKNOWN
+uf50-01.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-01.cnf,50,218,204,10.000049599912018,50,UNKNOWN
+uf50-010.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-010.cnf,50,218,205,10.000053899828345,50,UNKNOWN
+uf50-02.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-02.cnf,50,218,210,10.000030800234526,50,UNKNOWN
+uf50-03.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-03.cnf,50,218,216,10.000014199875295,50,UNKNOWN
+uf50-04.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-04.cnf,50,218,206,10.000019500032067,50,UNKNOWN
+uf50-05.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-05.cnf,50,218,205,10.000107500236481,50,UNKNOWN
+uf50-06.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-06.cnf,50,218,209,10.000023399945349,50,UNKNOWN
+uf50-07.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-07.cnf,50,218,203,10.000019200146198,50,UNKNOWN
+uf50-08.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-08.cnf,50,218,206,10.000609499868006,50,UNKNOWN
+uf50-09.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf50-09.cnf,50,218,211,10.000019199680537,50,UNKNOWN
+uf75-01.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-01.cnf,75,325,289,10.00007600011304,75,UNKNOWN
+uf75-010.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-010.cnf,75,325,304,10.00004700012505,75,UNKNOWN
+uf75-02.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-02.cnf,75,325,303,10.000136699993163,75,UNKNOWN
+uf75-03.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-03.cnf,75,325,295,10.000077900011092,75,UNKNOWN
+uf75-04.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-04.cnf,75,325,306,10.000076900236309,75,UNKNOWN
+uf75-05.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-05.cnf,75,325,303,10.000064000021666,75,UNKNOWN
+uf75-06.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-06.cnf,75,325,302,10.00009399978444,75,UNKNOWN
+uf75-07.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-07.cnf,75,325,297,10.00003210036084,75,UNKNOWN
+uf75-08.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-08.cnf,75,325,292,10.000104099977762,75,UNKNOWN
+uf75-09.cnf,.\PA3_Benchmarks\PA3_Benchmarks\CNF Formulas\uf75-09.cnf,75,325,298,10.00003180000931,75,UNKNOWN
+,,,,,,,
