@@ -285,37 +285,50 @@ def run_walksat(clauses, n_vars, *, max_flips=10000, p=0.5, rng=None):
     best_c = satisfied_count(clauses, assign)
     best_assign = assign[:]
 
-    def unsat_clauses():
-        return [cl for cl in clauses if not clause_satisfied(cl, assign)]
+    def unsat_nonempty():
+        # only return unsatisfied clauses that have at least one literal
+        return [cl for cl in clauses if cl and not clause_satisfied(cl, assign)]
 
     for _ in range(max_flips):
         if best_c == len(clauses):
             return best_c, best_assign[:]
 
-        unsat = unsat_clauses()
+        unsat = unsat_nonempty()
         if not unsat:
+            # either everything satisfied or only empty clauses remain
+            sc = satisfied_count(clauses, assign)
+            if sc > best_c:
+                best_c, best_assign = sc, assign[:]
             return best_c, best_assign[:]
 
         clause = rng.choice(unsat)
 
+        # If for some reason the chosen clause is empty, flip a random var
+        if not clause:
+            v = rng.randint(1, n_vars)
+            flip(assign, v)
         # random walk with probability p
-        if rng.random() < p:
+        elif rng.random() < p:
             v = abs(rng.choice(clause))
             flip(assign, v)
         else:
             # greedy among vars in the chosen clause
-            vars_in_clause = {abs(lit) for lit in clause}
-            current_satisfied = satisfied_count(clauses, assign)
-            gains = []
-            for v in vars_in_clause:
+            vars_in_clause = {abs(lit) for lit in clause if lit != 0}
+            if not vars_in_clause:
+                v = rng.randint(1, n_vars)
                 flip(assign, v)
-                sc = satisfied_count(clauses, assign)
-                gains.append((sc - current_satisfied, v))
+            else:
+                current_satisfied = satisfied_count(clauses, assign)
+                gains = []
+                for v in vars_in_clause:
+                    flip(assign, v)
+                    sc = satisfied_count(clauses, assign)
+                    gains.append((sc - current_satisfied, v))
+                    flip(assign, v)
+                max_gain = max(gains, key=lambda t: t[0])[0]
+                candidates = [v for gain, v in gains if gain == max_gain]
+                v = rng.choice(candidates)
                 flip(assign, v)
-            max_gain = max(gains, key=lambda t: t[0])[0]
-            candidates = [v for gain, v in gains if gain == max_gain]
-            v = rng.choice(candidates)
-            flip(assign, v)
 
         sc = satisfied_count(clauses, assign)
         if sc > best_c:
