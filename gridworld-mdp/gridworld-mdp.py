@@ -187,73 +187,131 @@ def make_grid2_mdp() -> GridWorldMDP:
     )
 
 # -------------------------------
-# Algorithms (to be implemented)
+# Algorithms (VI and PI)
 # -------------------------------
 
+#Value Iteration
 def run_value_iteration(
     mdp: GridWorldMDP,
     horizon: int,
 ) -> Tuple[Dict[State, float], Dict[State, Action]]:
-    """
-    Run Value Iteration on the given MDP for the specified number of iterations (time horizon).
 
-    Behavior:
-        - Initialize V(s) = 0 for all states.
-        - For t in 1->horizon:
-              For each non-terminal state s:
-                  V_new(s) = max_a sigma_{s'} P(s' | s, a) * [ R(s') + mdp.gamma * V(s') ]
-              Terminal states keep their value fixed: V(s) = R(s).
-        - After the loop, derive the greedy policy:
-              policy[s] = argmax_a sigma_{s'} P(s' | s, a) * [ R(s') + mdp.gamma * V(s') ]
-          for non-terminal states only.
+    V: Dict[State, float] = {s: 0.0 for s in mdp.all_states()}
 
-    Returns
-    -------
-    V : dict
-        Mapping from state -> value estimate.
-    policy : dict
-        Mapping from state -> greedy action according to V.
-    """
-    pass
+    # Terminal states always equal their reward
+    for s in mdp.terminal_states:
+        V[s] = mdp.reward(s)
 
+    for _ in range(horizon):
+        V_new = V.copy()
+        for s in mdp.all_states():
+            if mdp.is_terminal(s):
+                V_new[s] = mdp.reward(s)
+                continue
 
+            best_value = float("-inf")
+            for a in ACTIONS:
+                total = 0.0
+                for s2, prob in mdp.transition_probs(s, a).items():
+                    total += prob * (mdp.reward(s2) + mdp.gamma * V[s2])
+                best_value = max(best_value, total)
+
+            V_new[s] = best_value
+
+        V = V_new
+
+    # ---- Greedy policy extraction ----
+    policy: Dict[State, Action] = {}
+
+    for s in mdp.all_states():
+        if mdp.is_terminal(s):
+            continue
+
+        best_action = None
+        best_value = float("-inf")
+
+        for a in ACTIONS:
+            total = 0.0
+            for s2, prob in mdp.transition_probs(s, a).items():
+                total += prob * (mdp.reward(s2) + mdp.gamma * V[s2])
+
+            if total > best_value:
+                best_value = total
+                best_action = a
+
+        policy[s] = best_action
+
+    return V, policy
+
+# Policy Iteration
 def run_policy_iteration(
     mdp: GridWorldMDP,
     horizon: int,
 ) -> Tuple[Dict[State, float], Dict[State, Action]]:
-    """
-    Run (Modified) Policy Iteration on the given MDP.
 
-    'horizon' specifies the number of Bellman update sweeps performed
-    during each Policy Evaluation step. This means we do NOT solve the
-    full system of equations for V^pi; instead, we approximate it with
-    'horizon' iterations of value updates under the current policy.
+    states = mdp.all_states()
 
-    Behavior:
-        1. Initialize a policy pi(s) arbitrarily for all non-terminal states (e.g., always "U").
-        2. Loop until the policy is stable (or a max number of outer iterations):
-             a) Policy Evaluation:
-                    Initialize V(s) = 0 (or keep from previous iteration),
-                    then repeat 'horizon' times:
-                        For each state s:
-                            If s is terminal:
-                                V(s) = R(s)  (do not change)
-                            Else:
-                                V(s) = sigma_{s'} P(s' | s, pi(s)) * [ R(s') + γ * V(s') ]
-             b) Policy Improvement:
-                    For each non-terminal state s:
-                        Find best_action = argmax_a sigma_{s'} P(s' | s, a) * [ R(s') + γ * V(s') ]
-                        If best_action != pi(s), update pi(s) and mark policy_changed = True.
-             c) If policy_changed is False, stop.
+    # Initialize arbitrary policy (choose "U" for non-terminals)
+    policy: Dict[State, Action] = {
+        s: "U" for s in states if not mdp.is_terminal(s)
+    }
 
-    Returns
-    -------
-    V : dict
-        Mapping from state -> value under the final policy.
-    policy : dict
-        Mapping from state -> final policy's action in each state.
-    """
-    pass
+    # Initialize value function
+    V: Dict[State, float] = {s: 0.0 for s in states}
+    for s in mdp.terminal_states:
+        V[s] = mdp.reward(s)
+
+    policy_stable = False
+
+    while not policy_stable:
+        # --------------------
+        # Policy Evaluation
+        # --------------------
+        for _ in range(horizon):
+            V_new = V.copy()
+            for s in states:
+                if mdp.is_terminal(s):
+                    V_new[s] = mdp.reward(s)
+                    continue
+
+                a = policy[s]
+                total = 0.0
+                for s2, prob in mdp.transition_probs(s, a).items():
+                    total += prob * (mdp.reward(s2) + mdp.gamma * V[s2])
+
+                V_new[s] = total
+
+            V = V_new
+
+        # --------------------
+        # Policy Improvement
+        # --------------------
+        policy_stable = True
+
+        for s in states:
+            if mdp.is_terminal(s):
+                continue
+
+            old_action = policy[s]
+
+            best_action = None
+            best_value = float("-inf")
+
+            for a in ACTIONS:
+                total = 0.0
+                for s2, prob in mdp.transition_probs(s, a).items():
+                    total += prob * (mdp.reward(s2) + mdp.gamma * V[s2])
+
+                if total > best_value:
+                    best_value = total
+                    best_action = a
+
+            policy[s] = best_action
+
+            if best_action != old_action:
+                policy_stable = False
+
+    return V, policy
 
 # ----------------------
 # Visualization helpers
@@ -314,14 +372,11 @@ def print_policy_grid(grid: List[List[str]]) -> None:
     print()
 
 
-# ---------------------------------------------------------------------------
-# Example usage for testing (after algorithm implementation is done)
-# ---------------------------------------------------------------------------
+# --------------------------
+# Example usage for testing
+# --------------------------
 
 if __name__ == "__main__":
-    # NOTE: DON'T change the transition model or rewards.
-    # Just implement run_value_iteration and run_policy_iteration,
-    # then run them with horizons 50 and 100 for both grids.
     
     mdp1 = make_grid1_mdp()
     mdp2 = make_grid2_mdp()
@@ -329,6 +384,34 @@ if __name__ == "__main__":
     print("Grid 1 states:", len(mdp1.all_states()))
     print("Grid 2 states:", len(mdp2.all_states()))
 
-    # V1_50, pi1_50 = run_value_iteration(mdp1, horizon=50)
-    # grid_vals = values_to_grid(V1_50, mdp1.width, mdp1.height)
-    # print_value_grid(grid_vals)
+    V1_50, pi1_50 = run_value_iteration(mdp1, horizon=50)
+    grid_vals = values_to_grid(V1_50, mdp1.width, mdp1.height)
+    print_value_grid(grid_vals)
+
+    PV1_50, PP1_50 = run_policy_iteration(mdp1, horizon=50)
+    grid_policy = policy_to_grid(PP1_50, mdp1.width, mdp1.height, mdp1.terminal_states)
+    print_policy_grid(grid_policy)
+
+    V1_100, pi1_100 = run_value_iteration(mdp1, horizon=100)
+    grid_vals = values_to_grid(V1_100, mdp1.width, mdp1.height)
+    print_value_grid(grid_vals)
+    
+    PV1_100, PP1_100 = run_policy_iteration(mdp1, horizon=100)
+    grid_policy = policy_to_grid(PP1_100, mdp1.width, mdp1.height, mdp1.terminal_states)
+    print_policy_grid(grid_policy)
+
+    V2_50, pi2_50 = run_value_iteration(mdp2, horizon=50)
+    grid_vals = values_to_grid(V2_50, mdp2.width, mdp2.height)
+    print_value_grid(grid_vals)
+
+    PV2_50, PP2_50 = run_policy_iteration(mdp2, horizon=50)
+    grid_policy = policy_to_grid(PP2_50, mdp2.width, mdp2.height, mdp2.terminal_states)
+    print_policy_grid(grid_policy)
+
+    V2_100, pi2_100 = run_value_iteration(mdp2, horizon=100)
+    grid_vals = values_to_grid(V2_100, mdp2.width, mdp2.height)
+    print_value_grid(grid_vals)
+
+    PV2_100, PP2_100 = run_policy_iteration(mdp2, horizon=100)
+    grid_policy = policy_to_grid(PP1_100, mdp2.width, mdp2.height, mdp2.terminal_states)
+    print_policy_grid(grid_policy)
